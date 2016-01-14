@@ -1,0 +1,26 @@
+diff --git a/build/common_library.rb b/build/common_library.rb
+index 4348be5..ba13306 100644
+--- a/build/common_library.rb
++++ b/build/common_library.rb
+@@ -151,8 +151,8 @@ if USE_VENDORED_LIBEV
+ 
+ 	task :clean => 'libev:clean'
+ else
+-	LIBEV_CFLAGS = string_option('LIBEV_CFLAGS', '-I/usr/include/libev')
+-	LIBEV_LIBS   = string_option('LIBEV_LIBS', '-lev')
++	LIBEV_CFLAGS = string_option('LIBEV_CFLAGS', '-I/opt/rh/rh-passenger40/root/usr/include/')
++	LIBEV_LIBS   = string_option('LIBEV_LIBS', '-L/opt/rh/rh-passenger40/root/usr/lib64 -lev')
+ 	LIBEV_TARGET = nil
+ 	task :libev  # do nothing
+ end
+@@ -202,8 +202,8 @@ if USE_VENDORED_LIBEIO
+ 		end
+ 	end
+ else
+-	LIBEIO_CFLAGS = string_option('LIBEIO_CFLAGS', '-I/usr/include/libeio')
+-	LIBEIO_LIBS   = string_option('LIBEIO_LIBS', '-leio')
++	LIBEIO_CFLAGS = string_option('LIBEIO_CFLAGS', '-I/opt/rh/rh-passenger40/root/usr/include/')
++	LIBEIO_LIBS   = string_option('LIBEIO_LIBS', '-L/opt/rh/rh-passenger40/root/usr/lib64 -lev-eio')
+ 	LIBEIO_TARGET = nil
+ 	task :libeio  # do nothing
+ end
