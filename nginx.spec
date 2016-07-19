@@ -26,8 +26,8 @@
 
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
-Version:           1.8.0
-Release:           4%{?dist}
+Version:           1.8.1
+Release:           1%{?dist}
 
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
@@ -54,6 +54,8 @@ Source104:         50x.html
 # removes -Werror in upstream build scripts.  -Werror conflicts with
 # -D_FORTIFY_SOURCE=2 causing warnings to turn into errors.
 Patch0:            nginx-auto-cc-gcc.patch
+Patch1:            nginx-1.8.1-CVE-2016-4450.patch
+
 # Build Passenger against Fedora's (renamed) libeio
 Patch200:          passenger-4.0.38-libeio.patch
 # Fix passenger building with nginx-1.8.0
@@ -122,6 +124,7 @@ memory usage.
 %prep
 %setup -q -n nginx-%{version}
 %patch0 -p0
+%patch1 -p1 -b .cve4450
 
 %if 0%{?with_passenger}
 tar -xf %{SOURCE1}
@@ -498,6 +501,10 @@ fi
 %{?scl: %{_scl_scripts}/deregister.d/*}
 
 %changelog
+* Mon Jun 20 2016 Joe Orton <jorton@redhat.com> - 1:1.8.1-1
+- update to 1.8.1 (CVE-2016-0742 CVE-2016-0746 CVE-2016-0747)
+- add security fix for CVE-2016-4450
+
 * Fri Nov 13 2015 Jan Kaluza <jkaluza@redhat.com> - 1:1.8.0-4
 - fix SELinux context of /var/opt and /etc/opt directories (#1280221)
 
