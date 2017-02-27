@@ -25,7 +25,7 @@
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
 Version:           1.10.2
-Release:           1%{?dist}
+Release:           2%{?dist}
 
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
@@ -519,6 +519,7 @@ fi
 %attr(700,%{nginx_user},%{nginx_group}) %{nginx_home_tmp}
 %attr(700,%{nginx_user},%{nginx_group}) %dir %{nginx_logdir}
 %attr(700,%{nginx_user},%{nginx_group}) %dir %{_localstatedir}/run/nginx
+%dir %{_libdir}/nginx
 %dir %{_libdir}/nginx/modules
 
 %{?scl: %{_scl_scripts}/register.d/*}
@@ -558,6 +559,9 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
+* Thu Jan 19 2017 Joe Orton <jorton@redhat.com> - 1:1.10.2-2
+- own libdir/nginx
+
 * Thu Jan 19 2017 Joe Orton <jorton@redhat.com> - 1:1.10.2-1
 - update to 1.10.2 (#1404779)
 - merge changes from Fedora
