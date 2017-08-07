@@ -44,8 +44,7 @@
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
 Version:           1.12.0
-Release:           2%{?dist}
-
+Release:           3%{?dist}
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
 # BSD License (two clause)
@@ -206,6 +205,7 @@ export DESTDIR=%{buildroot}
     --with-ipv6 \
     --with-http_ssl_module \
     --with-http_v2_module \
+    --with-http_auth_request_module \
     --with-http_realip_module \
     --with-http_addition_module \
     --with-http_xslt_module=dynamic \
@@ -608,9 +608,8 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
-* Mon Jun 12 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.12.0-2
-- Resolved: #1263365 - return value of service httpd24-httpd is 3 instead of 2
-  when LOCKFILE exists and service is not running
+* Tue Jun 13 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.12.0-3
+- Resolved: #1323835 - RFE: add nginx-auth-ldap to rh-nginx18
 
 * Tue Jun 06 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.12.0-1
 - update to 1.12.0 (#1447400)
