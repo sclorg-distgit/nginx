@@ -44,7 +44,7 @@
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
 Version:           1.12.0
-Release:           3%{?dist}
+Release:           4%{?dist}
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
 # BSD License (two clause)
@@ -77,7 +77,7 @@ BuildRequires:     gd-devel
 BuildRequires:     gperftools-devel
 %endif
 BuildRequires:     libxslt-devel
-BuildRequires:     openssl-devel
+BuildRequires:     openssl-devel >= 1:1.0.2k
 BuildRequires:     pcre-devel
 BuildRequires:     zlib-devel
 %if 0%{?use_geoip}
@@ -608,7 +608,7 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
-* Tue Jun 13 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.12.0-3
+* Tue Jun 13 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.12.0-4
 - Resolved: #1323835 - RFE: add nginx-auth-ldap to rh-nginx18
 
 * Tue Jun 06 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.12.0-1
