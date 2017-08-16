@@ -43,8 +43,8 @@
 
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
-Version:           1.12.0
-Release:           4%{?dist}
+Version:           1.12.1
+Release:           1%{?dist}
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
 # BSD License (two clause)
@@ -608,6 +608,11 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
+* Wed Jul 12 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.12.1-1
+- update to 1.12.1
+- Resolves: CVE-2017-7529 nginx: Integer overflow in nginx range filter module
+  leading to memory disclosure
+
 * Tue Jun 13 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.12.0-4
 - Resolved: #1323835 - RFE: add nginx-auth-ldap to rh-nginx18
 
