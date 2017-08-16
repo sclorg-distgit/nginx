@@ -44,7 +44,7 @@
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
 Version:           1.12.1
-Release:           1%{?dist}
+Release:           2%{?dist}
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
 # BSD License (two clause)
@@ -138,6 +138,7 @@ BuildRequires:     %{scl_perl_prefix}perl-generators
 BuildRequires:     %{scl_perl_prefix}perl(ExtUtils::Embed)
 Requires:          %{?scl:%scl_prefix}nginx
 Requires:          %{scl_perl_prefix}perl(:MODULE_COMPAT_%(%{?scl:scl enable %{scl_perl} '}eval "`%{__perl} -V:version`"; echo $version%{?scl:'}))
+Requires:          %{scl_perl_prefix}perl(constant)
 
 %description mod-http-perl
 %{summary}.
@@ -608,6 +609,9 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
+* Tue Aug 08 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.12.1-2
+- Resolves: #1468712 - missing dependency for perl package
+
 * Wed Jul 12 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.12.1-1
 - update to 1.12.1
 - Resolves: CVE-2017-7529 nginx: Integer overflow in nginx range filter module
