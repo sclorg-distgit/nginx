@@ -7,7 +7,7 @@
 %endif
 
 %define use_geoip 0
-%define use_perl 0
+%define use_perl 1
 %global with_gperftools     0
 
 %global  _hardened_build     1
@@ -22,10 +22,24 @@
 
 %global service_name %{?scl_prefix}nginx
 
+%if 0%{?scl:1}
+%global scl_upper %{lua:print(string.upper(string.gsub(rpm.expand("%{scl}"), "-", "_")))}
+%endif
+
+%{!?scl_perl_prefix: %global scl_perl_prefix rh-perl524-}
+%{!?_nginx_perl_vendorarch: %global _nginx_perl_vendorarch %perl_vendorarch}
+
+%{?filter_setup:
+%filter_requires_in %{_nginx_perl_vendorarch}
+%filter_provides_in %{_nginx_perl_vendorarch}
+%filter_provides_in %{_libdir}/nginx/modules
+%filter_setup
+}
+
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
 Version:           1.10.2
-Release:           2%{?dist}
+Release:           7%{?dist}
 
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
@@ -36,6 +50,7 @@ URL:               http://nginx.org/
 
 Source0:           http://nginx.org/download/nginx-%{version}.tar.gz
 Source2:           scl-register-helper.sh
+Source3:           daemon-scl-helper.sh
 Source10:          nginx.service
 Source11:          nginx.logrotate
 Source12:          nginx.conf
@@ -60,18 +75,11 @@ BuildRequires:     gperftools-devel
 BuildRequires:     libxslt-devel
 BuildRequires:     openssl-devel
 BuildRequires:     pcre-devel
-BuildRequires:     perl-devel
-BuildRequires:     perl(ExtUtils::Embed)
 BuildRequires:     zlib-devel
 %if 0%{?use_geoip}
 BuildRequires:     GeoIP-devel
 %endif
 Requires:          gd
-Requires:          openssl
-Requires:          pcre
-%if 0%{?use_perl}
-Requires:          perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
-%endif
 Requires(pre):     shadow-utils
 Provides:          webserver
 
@@ -119,13 +127,13 @@ Requires:          gd
 %package mod-http-perl
 Group:             System Environment/Daemons
 Summary:           Nginx HTTP perl module
-BuildRequires:     perl-devel
+BuildRequires:     %{scl_perl_prefix}perl-devel
 %if 0%{?fedora} >= 24
-BuildRequires:     perl-generators
+BuildRequires:     %{scl_perl_prefix}perl-generators
 %endif
-BuildRequires:     perl(ExtUtils::Embed)
+BuildRequires:     %{scl_perl_prefix}perl(ExtUtils::Embed)
 Requires:          %{?scl:%scl_prefix}nginx
-Requires:          perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
+Requires:          %{scl_perl_prefix}perl(:MODULE_COMPAT_%(%{?scl:scl enable %{scl_perl} '}eval "`%{__perl} -V:version`"; echo $version%{?scl:'}))
 
 %description mod-http-perl
 %{summary}.
@@ -163,6 +171,9 @@ Requires:          %{?scl:%scl_prefix}nginx
 cp %{SOURCE200} .
 
 %build
+%{?scl:scl enable %{scl_perl} - << \EOF}
+set -x
+
 # nginx does not utilize a standard configure script.  It has its own
 # and the standard configure options cause the nginx configure script
 # to error out.  This is is also the reason for the DESTDIR environment
@@ -223,7 +234,7 @@ export DESTDIR=%{buildroot}
     --with-ld-opt="$RPM_LD_FLAGS -Wl,-E" # so the perl module finds its symbols
 
 make %{?_smp_mflags}
-
+%{?scl:EOF}
 
 %install
 #include helper script for creating register stuff
@@ -231,12 +242,21 @@ export _SR_BUILDROOT=%{buildroot}
 export _SR_SCL_SCRIPTS=%{?_scl_scripts}
 source %{SOURCE2}
 
-make install DESTDIR=%{buildroot} INSTALLDIRS=vendor
+%{?scl:scl enable %{scl_perl} - << \EOF}
+set -x
+make install DESTDIR=%{buildroot} INSTALLDIRS=vendor \
+     INSTALLVENDORARCH=%{_nginx_perl_vendorarch} \
+     INSTALLVENDORMAN3DIR=%{_mandir}/man3
+%{?scl:EOF}
 
 find %{buildroot} -type f -name .packlist -exec rm -f '{}' \;
 find %{buildroot} -type f -name perllocal.pod -exec rm -f '{}' \;
 find %{buildroot} -type f -empty -exec rm -f '{}' \;
 find %{buildroot} -type f -iname '*.so' -exec chmod 0755 '{}' \;
+
+install -D -p -m 0755 %{SOURCE3} \
+    %{buildroot}%{_libexecdir}/nginx-scl-helper
+
 %if %{use_systemd}
 install -p -D -m 0644 %{SOURCE10} \
     %{buildroot}%{_unitdir}/%{?scl:%scl_prefix}nginx.service
@@ -244,6 +264,10 @@ install -p -D -m 0644 %{SOURCE10} \
 sed -i 's|\$sbindir|%{_sbindir}|' \
     %{buildroot}%{_unitdir}/%{?scl:%scl_prefix}nginx.service
 sed -i 's|\$localstatedir|%{_localstatedir}|' \
+    %{buildroot}%{_unitdir}/%{?scl:%scl_prefix}nginx.service
+sed -i 's|\$libexecdir|%{_libexecdir}|' \
+    %{buildroot}%{_unitdir}/%{?scl:%scl_prefix}nginx.service
+touch -r %{SOURCE10} \
     %{buildroot}%{_unitdir}/%{?scl:%scl_prefix}nginx.service
 
 scl_reggen %{name} --cpfile %{_unitdir}/%{?scl:%scl_prefix}nginx.service
@@ -270,7 +294,11 @@ sed -i 's|\$localstatedir|%{_localstatedir}|' \
     %{buildroot}/etc/rc.d/init.d/%{?scl:%scl_prefix}nginx
 sed -i 's|\$sysconfdir|%{_sysconfdir}|' \
     %{buildroot}/etc/rc.d/init.d/%{?scl:%scl_prefix}nginx
-sed -i 's|\$scl|%scl_prefix|' \
+sed -i 's|\$sclprefix|%scl_prefix|g' \
+    %{buildroot}/etc/rc.d/init.d/%{?scl:%scl_prefix}nginx
+sed -i 's|\$sclname|%scl|g' \
+    %{buildroot}/etc/rc.d/init.d/%{?scl:%scl_prefix}nginx
+sed -i 's|\$upperscl|%{scl_upper}|g' \
     %{buildroot}/etc/rc.d/init.d/%{?scl:%scl_prefix}nginx
 scl_reggen %{name} --cpfile %{_root_initddir}/%{?scl:%scl_prefix}nginx
 
@@ -380,8 +408,11 @@ echo 'load_module "%{_libdir}/nginx/modules/ngx_http_geoip_module.so";' \
 echo 'load_module "%{_libdir}/nginx/modules/ngx_http_image_filter_module.so";' \
     > %{buildroot}%{_datadir}/nginx/modules/mod-http-image-filter.conf
 %if 0%{?use_perl}
-echo 'load_module "%{_libdir}/nginx/modules/ngx_http_perl_module.so";' \
-    > %{buildroot}%{_datadir}/nginx/modules/mod-http-perl.conf
+cat > %{buildroot}%{_datadir}/nginx/modules/mod-http-perl.conf <<EOF
+load_module "%{_libdir}/nginx/modules/ngx_http_perl_module.so";
+env PERL5LIB;
+env LD_LIBRARY_PATH;
+EOF
 %endif
 echo 'load_module "%{_libdir}/nginx/modules/ngx_http_xslt_filter_module.so";' \
     > %{buildroot}%{_datadir}/nginx/modules/mod-http-xslt-filter.conf
@@ -403,13 +434,6 @@ install -p -m 0644 %{SOURCE103} %{SOURCE104} \
 install -p -D -m 0644 %{_builddir}/nginx-%{version}/man/nginx.8 \
     %{buildroot}%{_mandir}/man8/nginx.8
 
-%if 0%{?scl:1} && 0%{?use_perl}
-# pm man page is installed to bad directory for some reason... Move it to
-# the proper one.
-mkdir -p %{buildroot}%{_mandir}/man3/
-mv %{buildroot}/usr/share/man/man3/* %{buildroot}%{_mandir}/man3/
-%endif
-
 mkdir -p %{buildroot}%{_localstatedir}/run/nginx
 
 # Replaces variables in man page with proper values
@@ -421,6 +445,18 @@ sed -i 's|\%\%CONF_PATH\%\%|%{nginx_confdir}/nginx.conf|' \
     %{buildroot}%{_mandir}/man8/nginx.8
 sed -i 's|\%\%ERROR_LOG_PATH\%\%|%{nginx_logdir}/error.log|' \
     %{buildroot}%{_mandir}/man8/nginx.8
+
+%if 0%{?scl:1}
+cat << EOF | tee -a %{buildroot}%{?_scl_scripts}/service-environment
+# Services are started in a fresh environment without any influence of user's
+# environment (like environment variable values). As a consequence,
+# information of all enabled collections will be lost during service start up.
+# If user needs to run a service under any software collection enabled, this
+# collection has to be written into %{scl_upper}_SCLS_ENABLED variable
+# in %{?_scl_scripts}/service-environment.
+%{scl_upper}_SCLS_ENABLED="%{scl}"
+EOF
+%endif #scl
 
 %pre
 getent group %{nginx_group} > /dev/null || groupadd -r %{nginx_group}
@@ -444,6 +480,9 @@ semanage fcontext -a -e %{_root_localstatedir}/run/nginx %{_localstatedir}/run/n
 restorecon -R %{_localstatedir}/run/nginx >/dev/null 2>&1 || :
 
 %if %{use_systemd}
+# Ensure the helper script has the right context.
+semanage fcontext -a -t httpd_exec_t %{_root_libexecdir}/nginx-scl-helper >/dev/null 2>&1 || :
+restorecon -R %{_libexecdir}/nginx-scl-helper >/dev/null 2>&1 || :
 %systemd_post %{service_name}.service
 %else
 semanage fcontext -a -e /etc/rc.d/init.d/nginx /etc/rc.d/init.d/%{?scl:%scl_prefix}nginx >/dev/null 2>&1 || :
@@ -484,10 +523,8 @@ fi
 %{nginx_datadir}/html
 %dir %{nginx_datadir}/modules
 %{_sbindir}/nginx
-%if 0%{?use_perl}
-%{_mandir}/man3/nginx.3pm*
-%endif
 %{_mandir}/man8/nginx.8*
+%{?scl:%{_libexecdir}/nginx-scl-helper}
 %if %{use_systemd}
 %{_unitdir}/%{service_name}.service
 %dir %{_root_libexecdir}/initscripts/legacy-actions/%{?scl:%scl_prefix}nginx
@@ -525,7 +562,7 @@ fi
 %{?scl: %{_scl_scripts}/register.d/*}
 %{?scl: %{_scl_scripts}/register.content/*}
 %{?scl: %{_scl_scripts}/deregister.d/*}
-
+%{?scl:%config(noreplace) %{?_scl_scripts}/service-environment}
 
 %if 0%{?use_geoip}
 %files mod-http-geoip
@@ -541,9 +578,8 @@ fi
 %files mod-http-perl
 %{_datadir}/nginx/modules/mod-http-perl.conf
 %{_libdir}/nginx/modules/ngx_http_perl_module.so
-%dir %{perl_vendorarch}/auto/nginx
-%{perl_vendorarch}/nginx.pm
-%{perl_vendorarch}/auto/nginx/nginx.so
+%{_nginx_perl_vendorarch}/*
+%{_mandir}/man3/nginx.3pm.*
 %endif
 
 %files mod-http-xslt-filter
@@ -559,6 +595,25 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
+* Thu Mar 23 2017 Joe Orton <jorton@redhat.com> - 1:1.10.2-7
+- filter auto-provides from module subpackages (#1434349)
+- drop perl vendorarch directory ownership (#1434333)
+
+* Thu Mar  2 2017 Joe Orton <jorton@redhat.com> - 1:1.10.2-6
+- run nginx under SCL environment from SysV init script
+
+* Thu Mar  2 2017 Joe Orton <jorton@redhat.com> - 1:1.10.2-5
+- filter perl(*) req/prov (#1421927)
+
+* Wed Mar  1 2017 Joe Orton <jorton@redhat.com> - 1:1.10.2-4
+- drop explicit Requires for openssl, gd
+- run nginx under SCL environment from systemd service
+- fix module .conf path in nginx.conf
+- pass PERL5LIB, LD_LIBRARY_PATH from env when perl is loaded (#1421927)
+
+* Wed Feb  8 2017 Joe Orton <jorton@redhat.com> - 1:1.10.2-3
+- add mod-http-perl
+
 * Thu Jan 19 2017 Joe Orton <jorton@redhat.com> - 1:1.10.2-2
 - own libdir/nginx
 

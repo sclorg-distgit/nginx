@@ -22,7 +22,7 @@
 nginx="$sbindir/nginx"
 prog=$(basename $nginx)
 
-sysconfig="$sysconfdir/sysconfig/$scl$prog"
+sysconfig="$sysconfdir/sysconfig/$sclprefix$prog"
 lockfile="$localstatedir/lock/subsys/nginx"
 pidfile="$localstatedir/run/${prog}/${prog}.pid"
 
@@ -110,6 +110,19 @@ reopen_logs() {
     echo
     return $retval
 }
+
+# We have to re-enable SCL environment, because /sbin/service
+# clears almost all environment variables.
+# Since X_SCLS is cleared as well, we lose information about other
+# collections enabled.
+source /opt/rh/$sclname/service-environment
+source scl_source enable $$upperscl_SCLS_ENABLED
+
+# we want start daemon only inside "scl enable" invocation
+if ! scl_enabled $sclname; then
+    echo "Collection $sclname has to be listed in /opt/rh/$sclname/service-environment"
+    exit 1
+fi
 
 case "$1" in
     start)
