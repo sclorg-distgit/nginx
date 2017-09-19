@@ -39,7 +39,7 @@
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
 Version:           1.10.2
-Release:           7%{?dist}
+Release:           8%{?dist}
 
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
@@ -67,6 +67,7 @@ Source200:         README.dynamic
 # removes -Werror in upstream build scripts.  -Werror conflicts with
 # -D_FORTIFY_SOURCE=2 causing warnings to turn into errors.
 Patch0:            nginx-auto-cc-gcc.patch
+Patch1:            nginx-1.10.2-CVE-2017-7529.patch
 
 BuildRequires:     gd-devel
 %if 0%{?with_gperftools}
@@ -168,6 +169,7 @@ Requires:          %{?scl:%scl_prefix}nginx
 %prep
 %setup -q -n nginx-%{version}
 %patch0 -p0
+%patch1 -p0 -b .CVE-2017-7529
 cp %{SOURCE200} .
 
 %build
@@ -595,6 +597,10 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
+* Tue Aug 22 2017 Luboš Uhliarik <luhliari@redhat.com> - 1:1.10.2-8
+- Resolves: CVE-2017-7529 rh-nginx110-nginx: nginx: Integer overflow
+  in nginx range filter module leading to memory disclosure
+
 * Thu Mar 23 2017 Joe Orton <jorton@redhat.com> - 1:1.10.2-7
 - filter auto-provides from module subpackages (#1434349)
 - drop perl vendorarch directory ownership (#1434333)
