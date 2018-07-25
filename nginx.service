@@ -1,0 +1,24 @@
+[Unit]
+Description=The nginx HTTP and reverse proxy server
+After=syslog.target network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=forking
+PIDFile=$localstatedir/run/nginx/nginx.pid
+EnvironmentFile=/opt/rh/rh-nginx112/service-environment
+# Nginx will fail to start if /run/nginx.pid already exists but has the wrong
+# SELinux context. This might happen when running `nginx -t` from the cmdline.
+# https://bugzilla.redhat.com/show_bug.cgi?id=1268621
+ExecStartPre=/usr/bin/rm -f /var/opt/rh/rh-nginx112/run/nginx/nginx.pid
+ExecStartPre=$libexecdir/nginx-scl-helper enable $RH_NGINX112_SCLS_ENABLED -- /usr/bin/scl_enabled rh-nginx112
+ExecStartPre=$libexecdir/nginx-scl-helper enable $RH_NGINX112_SCLS_ENABLED -- /opt/rh/rh-nginx112/root/usr/sbin/nginx -t
+ExecStart=$libexecdir/nginx-scl-helper enable $RH_NGINX112_SCLS_ENABLED -- /opt/rh/rh-nginx112/root/usr/sbin/nginx
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s QUIT $MAINPID
+KillSignal=SIGQUIT
+TimeoutStopSec=5
+KillMode=process
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
