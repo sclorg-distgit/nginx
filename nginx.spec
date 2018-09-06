@@ -40,7 +40,7 @@
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
 Version:           1.14.0
-Release:           2%{?dist}
+Release:           3%{?dist}
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
 # BSD License (two clause)
@@ -590,6 +590,9 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
+* Wed Aug 08 2018 Luboš Uhliarik <luhliari@redhat.com> - 1:1.14.0-3
+- fixed service file and error documents
+
 * Wed Jul 18 2018 Luboš Uhliarik <luhliari@redhat.com> - 1:1.14.0-2
 - Resolves: #1470746 - rh-nginx112: unexpected initscpript action
 
