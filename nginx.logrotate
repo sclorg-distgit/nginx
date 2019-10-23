@@ -1,0 +1,13 @@
+$logdir/*log {
+    create 0644 nginx nginx
+    daily
+    rotate 10
+    missingok
+    notifempty
+    compress
+    sharedscripts
+    postrotate
+        /bin/kill -USR1 `cat $localstatedir/run/nginx/nginx.pid 2>/dev/null` 2>/dev/null || true
+    endscript
+}
+
