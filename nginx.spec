@@ -25,6 +25,7 @@
 
 %if 0%{?scl:1}
 %global scl_upper %{lua:print(string.upper(string.gsub(rpm.expand("%{scl}"), "-", "_")))}
+%{!?scl_name_version: %global scl_name_version %{lua:print(string.match(rpm.expand("%{scl}"), "%d+$"))}}
 %endif
 
 %{!?scl_perl_prefix: %global scl_perl_prefix rh-perl526-}
@@ -40,7 +41,7 @@
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
 Version:           1.16.1
-Release:           3%{?dist}
+Release:           4%{?dist}
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
 # BSD License (two clause)
@@ -291,6 +292,9 @@ sed -i 's|\$localstatedir|%{_localstatedir}|' \
     %{buildroot}%{_unitdir}/%{?scl:%scl_prefix}nginx.service
 sed -i 's|\$libexecdir|%{_libexecdir}|' \
     %{buildroot}%{_unitdir}/%{?scl:%scl_prefix}nginx.service
+sed -i 's|\$scl_name_version|%{scl_name_version}|g' \
+    %{buildroot}%{_unitdir}/%{?scl:%scl_prefix}nginx.service
+
 touch -r %{SOURCE10} \
     %{buildroot}%{_unitdir}/%{?scl:%scl_prefix}nginx.service
 
@@ -442,6 +446,19 @@ install -p -m 0644 %{SOURCE101} %{SOURCE102} \
     %{buildroot}%{nginx_webroot}
 install -p -m 0644 %{SOURCE103} %{SOURCE104} \
     %{buildroot}%{nginx_webroot}
+
+# Replaces variables in html files with prober values
+%if 0%{?scl:1}
+
+# in all html files
+for f in %{SOURCE100} %{SOURCE103} %{SOURCE104}; do
+    sed -i 's|\$scl_name_version|%{scl_name_version}|g' \
+        %{buildroot}%{nginx_webroot}/`basename $f`
+
+    touch -r $f \
+        %{buildroot}%{nginx_webroot}/`basename $f`
+done
+%endif
 
 install -p -D -m 0644 %{_builddir}/nginx-%{version}/man/nginx.8 \
     %{buildroot}%{_mandir}/man8/nginx.8
@@ -605,6 +622,10 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
+* Mon Oct 07 2019 Lubos Uhliarik <luhliari@redhat.com> - 1:1.16.1-4
+- Resolves: #1758809 - Nginx service does not start (wrong version used in the
+  systemd unit file)
+
 * Thu Aug 29 2019 Lubos Uhliarik <luhliari@redhat.com> - 1:1.16.1-3
 - Resolves: #1745696 - CVE-2019-9511 rh-nginx116-nginx: HTTP/2: large amount
   of data request leads to denial of service
