@@ -39,7 +39,7 @@
 
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
-Version:           1.16.0
+Version:           1.16.1
 Release:           1%{?dist}
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
@@ -609,6 +609,14 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
+* Thu Aug 29 2019 Lubos Uhliarik <luhliari@redhat.com> - 1:1.16.1-1
+- Resolves: #1745696 - CVE-2019-9511 rh-nginx116-nginx: HTTP/2: large amount
+  of data request leads to denial of service
+- Resolves: #1745689 - CVE-2019-9513 rh-nginx116-nginx: HTTP/2: flood using
+  PRIORITY frames resulting in excessive resource consumption
+- Resolves: #1745668 - CVE-2019-9516 rh-nginx116-nginx: HTTP/2: 0-length
+  headers leads to denial of service
+
 * Tue Aug 06 2019 Luboš Uhliarik <luhliari@redhat.com> - 1:1.16.0-1
 - Resolves: #1721187 - RFE: add collection for nginx 1.16
 - enable ngx_stream_ssl_preread module
