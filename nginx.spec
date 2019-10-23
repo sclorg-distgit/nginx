@@ -40,7 +40,7 @@
 Name:              %{?scl:%scl_prefix}nginx
 Epoch:             1
 Version:           1.16.1
-Release:           1%{?dist}
+Release:           3%{?dist}
 Summary:           A high performance web server and reverse proxy server
 Group:             System Environment/Daemons
 # BSD License (two clause)
@@ -76,9 +76,6 @@ Patch2:            nginx-1.16.0-pkcs11.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1655530
 Patch3:            nginx-1.14.1-perl-module-hardening.patch
-
-# https://bugzilla.redhat.com/show_bug.cgi?id=1643647
-Patch4:            nginx-1.16.0-enable-tls1v3-by-default.patch
 
 
 BuildRequires:     gd-devel
@@ -185,7 +182,6 @@ Requires:          %{?scl:%scl_prefix}nginx
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-#%patch4 -p1
 cp %{SOURCE200} .
 
 %build
@@ -609,7 +605,7 @@ fi
 %{_libdir}/nginx/modules/ngx_stream_module.so
 
 %changelog
-* Thu Aug 29 2019 Lubos Uhliarik <luhliari@redhat.com> - 1:1.16.1-1
+* Thu Aug 29 2019 Lubos Uhliarik <luhliari@redhat.com> - 1:1.16.1-3
 - Resolves: #1745696 - CVE-2019-9511 rh-nginx116-nginx: HTTP/2: large amount
   of data request leads to denial of service
 - Resolves: #1745689 - CVE-2019-9513 rh-nginx116-nginx: HTTP/2: flood using
